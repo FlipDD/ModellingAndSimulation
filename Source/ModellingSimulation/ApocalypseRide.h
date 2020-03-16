@@ -61,9 +61,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
 		float BrakingForce = 39.2f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
-		float ReleaseHeight;
+		float ReleaseHeight = 108;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
-		float BrakingHeight = 13.5f;
+		float BrakingHeight = 27;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Parameters)
 		float PauseTime = 2;
 

@@ -5,6 +5,9 @@
 #include "Components/CapsuleComponent.h"
 #include "DestructibleComponent.h"
 
+
+// Macros
+#define print(text) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 1.5, FColor::White,text)
 // Sets default values
 AApocalypseRide::AApocalypseRide()
 {
@@ -47,7 +50,7 @@ void AApocalypseRide::BeginPlay()
 	// Start with tick off and only turn on when the player activates it.
 	SetActorTickEnabled(false);
 
-	OldLoc = GetActorLocation();
+	OldLoc = CarMesh->GetComponentLocation();
 
 	// Set initial conditions
 	Time = 0;
@@ -78,7 +81,7 @@ void AApocalypseRide::Tick(float DeltaTime)
 
 		VelyZ = VelyLift;
 		ForceZ = 0;
-
+		UE_LOG(LogTemp, Warning, TEXT("Dispz: %f, releaseheight: %f"), DispZ, ReleaseHeight);
 		if (DispZ >= ReleaseHeight) {  // have reached the top
 			CarState = StateEnum::STATE_PAUSEATTOP;
 			SaveTime = Time;
@@ -134,12 +137,16 @@ void AApocalypseRide::Tick(float DeltaTime)
 
 	NewVec = OldLoc;
 	NewVec.Z = NewVec.Z + (DispZ * Scaling);
-	CarMesh->SetRelativeLocation(NewVec);
+	CarMesh->SetWorldLocation(NewVec);
 
+	UE_LOG(LogTemp, Warning, TEXT("AccelZ: %f"), AccelZ);
 	if (AccelZ > MaxAcc) {
 		CarMesh->SetVisibility(false);
 		DestroyedCarMesh->SetVisibility(true);
 		DestroyedCarMesh->SetSimulatePhysics(true);
+		DestroyedCarMesh->ApplyRadiusDamage(50000, CarMesh->GetComponentLocation(), 5000, 5000, true);
+		//NewObject<UDestructibleMesh>(this, DestroyedCarMeshToSpawn);
+		//DestroyedCarMesh->SetSimulatePhysics(true);
 		SetActorTickEnabled(false);
 		PrimaryActorTick.bCanEverTick = false;
 	}

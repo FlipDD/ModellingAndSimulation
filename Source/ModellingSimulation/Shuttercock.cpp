@@ -3,6 +3,7 @@
 
 #include "Shuttercock.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
@@ -11,9 +12,14 @@ AShuttercock::AShuttercock()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Create and attach the mesh for the shuttercock
+	// Create and attach the capsule collider
+	Capsule = CreateDefaultSubobject<UCapsuleComponent>("Capsule");
+	Capsule->SetCapsuleSize(18.5f, 13);
+	Capsule->SetupAttachment(GetRootComponent());
+
+	// Create and attach the mesh for the shuttlecock
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
-	Mesh->SetupAttachment(GetRootComponent());
+	Mesh->SetupAttachment(Capsule);
 
 	// Assign the value of PI
 	Pi = UKismetMathLibrary::GetPI();
@@ -32,11 +38,17 @@ void AShuttercock::BeginPlay()
 
 	VelyY = InitSpeed * (sin(LaunchAngle2 * Pi / 180));
 	VelyZ = InitSpeed * (cos(LaunchAngle2 * Pi / 180));
+	//VelyY = InitSpeed * (sin(LaunchAngle));
+	//VelyZ = InitSpeed * (cos(LaunchAngle));
 
 	Theta = LaunchAngle2 * Pi / 180;
+	SetActorRotation(FRotator(0, 0, LaunchAngle));
+
+	GroundHeight = GetActorLocation().Z;
 
 	DispY = InitDispY;
 	DispZ = InitHeight;
+	AddActorWorldOffset(FVector(0, -InitDispY * 100, InitHeight * 100));
 }
 
 // Called every frame
@@ -44,7 +56,6 @@ void AShuttercock::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UE_LOG(LogTemp, Warning, TEXT("Running"));
 	// COMPUTATION
 	// Here you will write your code based on your mathematical model --------------
 
@@ -61,18 +72,23 @@ void AShuttercock::Tick(float DeltaTime)
 	// Calculate the Speed Squared
 	SpeedSquared = VelyY * VelyY + VelyZ * VelyZ;
 	Speed = sqrt(SpeedSquared);
+	
 	// Calculate Total Drag
-	TotalDrag = 0.5f * Pi * (ShuttleRad * ShuttleRad) * AirDensity * DragCoeff * (Speed * Speed);
+	TotalDrag = (0.5f * Pi * (ShuttleRad * ShuttleRad)) * AirDensity * DragCoeff * (Speed * Speed);
+	
 	// Calculate the Drag for both Y and Z axis
 	DragY = TotalDrag * (VelyY / Speed);
 	DragZ = TotalDrag * (VelyZ / Speed);
+
 	// Calculate the forces moving the shuttlecock - Don't forget gravity in Z
 	ForceY = -DragY;
 	ForceZ = -DragZ + (Gravity * Mass);
+
 	// Calculate acceleration, velocity and position for both the Y and Z axis
 	AccelZ = ForceZ / Mass;
 	VelyZ += AccelZ * DeltaTime;
 	DispZ += VelyZ * DeltaTime;
+
 	AccelY = ForceY / Mass;
 	VelyY += AccelY * DeltaTime;
 	DispY += VelyY * DeltaTime;
@@ -90,7 +106,10 @@ void AShuttercock::Tick(float DeltaTime)
 	SetActorLocation(NewPos);
 
 	// Get the angle from the velocity and set new rotation
-	Theta = UKismetMathLibrary::Atan2(VelyY, VelyZ);
-	AddActorLocalRotation(FRotator(0, 65536 * Theta / (2 * Pi), 0));
+	Theta = UKismetMathLibrary::Atan2(VelyZ, VelyY);
+	SetActorRotation(FRotator(0, 0, Theta));
+
+	if (GetActorLocation().Z < GroundHeight)
+		SetActorTickEnabled(false);
 }
 

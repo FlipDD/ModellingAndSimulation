@@ -11,8 +11,12 @@ class MODELLINGSIMULATION_API AShuttercock : public AActor
 {
 	GENERATED_BODY()
 	
+	/** Shuttercock collider*/
+	UPROPERTY(VisibleDefaultsOnly, Category = Components)
+		class UCapsuleComponent* Capsule;
+
 	/** Shuttercock mesh*/
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	UPROPERTY(VisibleDefaultsOnly, Category = Components)
 		class UStaticMeshComponent* Mesh;
 
 public:
@@ -62,6 +66,9 @@ public:
 	float AccelZ;
 	float Time;
 	float Theta;
+
+	// Extras
+	float GroundHeight;
 
 public:
 	// Called every frame
